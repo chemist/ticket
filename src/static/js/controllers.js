@@ -28,6 +28,7 @@ function Room($scope, $http, $routeParams, Lesson) {
 
 	// add guest to free room
 	$scope.addGuest = function(data) {
+        console.log($scope.form.roomId);
 		if ($scope.form.roomId) {
 			var freeRoom = {
 				roomId: $scope.form.roomId,
@@ -53,6 +54,7 @@ function Room($scope, $http, $routeParams, Lesson) {
 			Lesson.post({
 				id: $routeParams.id
 			}, $scope.lesson);
+            $scope.form.roomId = undefined
 
 		} else {
 			console.log('max allowed room')
