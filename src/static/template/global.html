@@ -1,0 +1,36 @@
+<hr>
+<form name="lessonForm" ng-submit="addLesson(lessonForm)" class="form-inline">
+ <input id="picker" class='span2' placeholder="дата" b-datepicker="{{dateoptions}}" ng-change="loadInfo()"
+ ng-model="lessonForm.utcTime" />
+ <select class='span1' ng-model="lessonForm.time" ng-options="(a.unHour + ':00') for a in hour">
+  <option value="">время</option>
+ </select>
+ <input class='span1' type="text" placeholder="type" ng-model="lessonForm.type">
+ <button type="submit" class="btn">Добавить урок</button>
+</form>
+<div id="lessonInfo">
+ <table class="table table-hover span10">
+  <thead>
+      <tr>
+          <th>#</th>
+          <th>Дата</th>
+          <th>Время</th>
+          <!--          <th>Аудитория</th> -->
+          <th>Тип занятия</th>
+          <th>Занято</th>
+          <th>Свободно</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr ng-repeat="l in info " onclick="document.location = '#lesson/{{l.lessonId}}';">
+          <th>{{l.lessonId}}</th>
+          <th>{{showDate(l.date)}}</th>
+          <th>{{showTime(l.date)}}</th>
+          <th>{{l.lessonType}}</th>
+          <th>{{freeRooms(l.rooms)}}</th>
+          <th>{{closeRooms(l.rooms)}}</th>
+      </tr>
+  </tbody>
+ </table>
+</div>
+<div>{{lesson}}</div>

@@ -1,0 +1,79 @@
+<hr>
+<div id="room">
+ <div class="btn-toolbar">
+  <div class="btn-group">
+   <a ng-repeat="room in lesson.rooms" class="btn">
+            <span class={{setColor(room)}} id={{room.roomId}}>{{room.roomId}}</span>
+        </a>
+  </div>
+ </div>
+ <div class="guestsBody">
+  <table class="table table-hover span10">
+   <thead>
+    <tr>
+     <th>#</th>
+     <th>Фамилия</th>
+     <th>Имя</th>
+     <th>Телефон</th>
+     <th>Возраст</th>
+     <th>Комментарий</th>
+     <th>#</th>
+    </tr>
+   </thead>
+   <tbody>
+    <tr id="{{'list_' + g.roomId}}" ng-repeat="g in lesson.rooms | removeNull">
+     <th>{{g.roomId}}</th>
+     <th>{{g.guest.firstname}}</th>
+     <th>{{g.guest.secondname}}</th>
+     <th>{{g.guest.phone}}</th>
+     <th>{{g.guest.age}}</th>
+     <th>{{g.guest.comment}}</th>
+     <th>
+      <a ng-click="editRoom(g)"><i class="icon-repeat"></i></a>
+      <a ng-click="cleanRoom(g)"><i class="icon-trash"></i></a>
+     </th>
+    </tr>
+   </tbody>
+  </table>
+ </div>
+ <div>
+  <legend>Добавить посетителя</legend>
+  <form name="form" ng-submit="addGuest(form)" novalidate
+  class="form-horizontal css-form">
+   <div class="control-group">
+    <label class="control-label" for="secondname">Имя:</label>
+    <div class="controls">
+     <input type="text" ng-model="form.secondname" placeholder="Введите имя">
+    </div>
+   </div>
+   <div class="control-group">
+    <label class="control-label" for="firstname">Фамилия:</label>
+    <div class="controls">
+     <input type="text" ng-model="form.firstname" placeholder="Введите фамилию">
+    </div>
+   </div>
+   <div class="control-group">
+    <label class="control-label" for="age">Возраст:</label>
+    <div class="controls">
+     <input type="number" ng-model="form.age" placeholder="Введите возраст">
+    </div>
+   </div>
+   <div class="control-group">
+    <label class="control-label" for="phone">Телефон:</label>
+    <div class="controls">
+     <input type="text" ng-model="form.phone" placeholder="Введите телефон">
+    </div>
+   </div>
+   <div class="control-group">
+    <label class="control-label" for="comment">Коментарий:</label>
+    <div class="controls">
+     <textarea rows="3" ng-model="form.comment" placeholder="Введите коментарий"></textarea>
+    </div>
+   </div>
+   <div class="controls">
+    <button class="btn btn-primary" type="submit" value="add">Добавить посетителя</button>
+   </div>
+  </form>
+ </div>
+</div>
+<div>{{lesson}}</div>
