@@ -85,11 +85,6 @@ main' conf = scotty (port conf) $ do
         j <- jsonData
         addGuestToRoom conf j
 
-
-
-
-    
-
 getLessonsList::Configure -> UTCTime -> ActionM ()
 getLessonsList conf date = do
     a <- liftIO $ query' (state conf) (CurrentLessons date)
@@ -126,13 +121,4 @@ addGuestToRoom::Configure -> Lesson -> ActionM ()
 addGuestToRoom conf  less = do
     a <- liftIO $ update' (state conf) (UpdateLesson less)
     json a
-
-
-myapp = get "/" logger
-
-logger::ActionM ()
-logger = text "hello"
-
-myrout::RoutePattern
-myrout = "/"
 
