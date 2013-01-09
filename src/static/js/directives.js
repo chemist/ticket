@@ -40,4 +40,22 @@ directive('bDatepicker', function() {
 			});
 		}
 	};
+}).
+directive('bTimepicker', function() {
+    return  {
+        restrict: 'A',
+        link: function(scope, element, attrs) {
+            return attrs.$observe('bTimepicker', function(value) {
+                var options;
+                options = {};
+                if (angular.isObject(value)) {
+                    options = value;
+                };
+                if (typeof(value) === "string") {
+                    options = angular.fromJson(value);
+                };
+                return element.timepicker(options)
+            });
+        }
+    };
 });

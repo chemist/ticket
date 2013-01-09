@@ -129,6 +129,12 @@ function Global($scope, FreeHour, Lessons, NewLesson) {
 		format: 'dd-mm-yyyy',
 		language: 'ru'
 	};
+    $scope.timeoptions = {
+        defaultTime: 'current',
+        showMeridian: false,
+        showInputs: false,
+        disableFocus:true
+    };
 
 	// add lesson
 	$scope.addLesson = function(x) {

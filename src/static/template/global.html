@@ -6,6 +6,10 @@
   <option value="">время</option>
  </select>
  <input class='span1' type="text" placeholder="type" ng-model="lessonForm.type">
+     <input type="text" placeholder="начало" style="width: 75px" b-timepicker="{{timeoptions}}" class="timepicker-default input-small form-inline">
+        <i class="icon-time" style="margin: 2px 0 0 -22.5px; pointer-events: none; position: relative;"></i>
+     <input type="text" placeholder="конец" style="width: 75px" b-timepicker="{{timeoptions}}" class="timepicker-default input-small">
+        <i class="icon-time" style="margin: 2px 0 0 -22.5px; pointer-events: none; position: relative;"></i>
  <button type="submit" class="btn">Добавить урок</button>
 </form>
 <div id="lessonInfo">
@@ -34,3 +38,4 @@
  </table>
 </div>
 <div>{{lesson}}</div>
+<hr>
