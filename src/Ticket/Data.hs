@@ -55,7 +55,8 @@ type Rooms = [Room]
 
 data Lesson =  Lesson { lessonId::LessonId
                       , date::UTCTime
-                      , lessonType::Int
+                      , classroom::Int
+                      , teacher::String
                       , rooms::Rooms
                       } deriving (Show, Eq, Data, Ord, Typeable, Generic)
 
@@ -91,7 +92,8 @@ newtype FirstName = FirstName Text deriving (Eq, Ord, Data, Typeable, SafeCopy)
 newtype SecondName = SecondName Text deriving (Eq, Ord, Data, Typeable, SafeCopy)
 newtype Age = Age Int deriving (Eq, Ord, Data, Typeable, SafeCopy)
 newtype Phone = Phone Text deriving (Eq, Ord, Data, Typeable, SafeCopy)
-newtype LessonType = LessonType Int deriving (Eq, Ord, Data, Typeable, SafeCopy)
+newtype ClassRoom = ClassRoom Int deriving (Eq, Ord, Data, Typeable, SafeCopy)
+newtype Teacher = Teacher String deriving (Eq, Ord, Data, Typeable, SafeCopy)
 newtype Word = Word Text deriving (Eq, Ord, Data, Typeable, SafeCopy)
 
 utcToHour::UTCTime -> Hour
@@ -106,8 +108,8 @@ instance Indexable Guest where
 
 instance Indexable Lesson where
     empty = ixSet [ ixFun $ \x -> [utctDay $ date x]
-                  , ixFun $ \x -> [utcToHour $ date x]
-                  , ixFun $ \x -> [LessonType $ lessonType x]
+                  , ixFun $ \x -> [ClassRoom $ classroom x]
+                  , ixFun $ \x -> [Teacher $ teacher x]
                   , ixFun $ \x -> [lessonId x]
                   , ixFun $ \x -> makeIx $ rooms x
                   ]

@@ -43,8 +43,22 @@ directive('bDatepicker', function() {
 }).
 directive('bTimepicker', function() {
     return  {
+        require: '?ngModel',
         restrict: 'A',
-        link: function(scope, element, attrs) {
+        link: function(scope, element, attrs, ngModelCtrl) {
+			var originalRender, updateModel;
+			updateModel = function() {
+				scope.$apply(function() {
+					ngModelCtrl.$setViewValue({hour: element.data().timepicker.hour, minute: element.data().timepicker.minute});
+				});
+			};
+			if (ngModelCtrl) {
+				originalRender = ngModelCtrl.$render;
+				ngModelCtrl.$render = function() {
+					originalRender();
+					return element.timepicker.date = ngModelCtrl.$viewValue;
+				};
+			}  
             return attrs.$observe('bTimepicker', function(value) {
                 var options;
                 options = {};
@@ -54,7 +68,7 @@ directive('bTimepicker', function() {
                 if (typeof(value) === "string") {
                     options = angular.fromJson(value);
                 };
-                return element.timepicker(options)
+                return element.timepicker(options).on('change', updateModel);
             });
         }
     };

@@ -1,41 +1,38 @@
 <hr>
 <form name="lessonForm" ng-submit="addLesson(lessonForm)" class="form-inline">
- <input id="picker" class='span2' placeholder="дата" b-datepicker="{{dateoptions}}" ng-change="loadInfo()"
- ng-model="lessonForm.utcTime" />
- <select class='span1' ng-model="lessonForm.time" ng-options="(a.unHour + ':00') for a in hour">
-  <option value="">время</option>
- </select>
- <input class='span1' type="text" placeholder="type" ng-model="lessonForm.type">
-     <input type="text" placeholder="начало" style="width: 75px" b-timepicker="{{timeoptions}}" class="timepicker-default input-small form-inline">
-        <i class="icon-time" style="margin: 2px 0 0 -22.5px; pointer-events: none; position: relative;"></i>
-     <input type="text" placeholder="конец" style="width: 75px" b-timepicker="{{timeoptions}}" class="timepicker-default input-small">
-        <i class="icon-time" style="margin: 2px 0 0 -22.5px; pointer-events: none; position: relative;"></i>
- <button type="submit" class="btn">Добавить урок</button>
+  <input id="picker" class='span2' placeholder="дата" b-datepicker="{{dateoptions}}"
+  ng-change="loadInfo()" ng-model="lessonForm.utcTime" />
+  <input ng-model="lessonForm.utime" placeholder="начало" style="width: 75px" b-timepicker="{{timeoptions}}"
+  class="timepicker-default input-small form-inline" >
+  <i class="icon-time" style="margin: 2px 0 0 -22.5px; pointer-events: none; position: relative;"></i>
+  <input class='span2' type="text" placeholder="аудитория" ng-model="lessonForm.classroom">
+  <input class='span3' type="text" placeholder="преподаватель" ng-model="lessonForm.teacher">
+  <button type="submit" class="btn">Добавить урок</button>
 </form>
 <div id="lessonInfo">
- <table class="table table-hover span10">
-  <thead>
+  <table class="table table-hover span10">
+    <thead>
       <tr>
-          <th>#</th>
-          <th>Дата</th>
-          <th>Время</th>
-          <!--          <th>Аудитория</th> -->
-          <th>Тип занятия</th>
-          <th>Занято</th>
-          <th>Свободно</th>
+        <th>#</th>
+        <th>Дата</th>
+        <th>Время</th>
+        <th>Аудитория</th>
+        <th>Преподаватель</th>
+        <th>Занято</th>
+        <th>Свободно</th>
       </tr>
-  </thead>
-  <tbody>
+    </thead>
+    <tbody>
       <tr ng-repeat="l in info " onclick="document.location = '#lesson/{{l.lessonId}}';">
-          <th>{{l.lessonId}}</th>
-          <th>{{showDate(l.date)}}</th>
-          <th>{{showTime(l.date)}}</th>
-          <th>{{l.lessonType}}</th>
-          <th>{{freeRooms(l.rooms)}}</th>
-          <th>{{closeRooms(l.rooms)}}</th>
+        <th>{{l.lessonId}}</th>
+        <th>{{showDate(l.date)}}</th>
+        <th>{{showTime(l.date)}}</th>
+        <th>{{l.classroom}}</th>
+        <th>{{l.teacher}}</th>
+        <th>{{freeRooms(l.rooms)}}</th>
+        <th>{{closeRooms(l.rooms)}}</th>
       </tr>
-  </tbody>
- </table>
+    </tbody>
+  </table>
 </div>
-<div>{{lesson}}</div>
 <hr>

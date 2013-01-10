@@ -98,9 +98,6 @@ function Global($scope, FreeHour, Lessons, NewLesson) {
 		$scope.info = Lessons.query({
 			time: $scope.lessonForm.utcTime.toISOString()
 		});
-		$scope.hour = FreeHour.query({
-			time: $scope.lessonForm.utcTime.toISOString()
-		});
 	};
 	$scope.showDate = function(x) {
 		var date = new Date(x);
@@ -108,7 +105,7 @@ function Global($scope, FreeHour, Lessons, NewLesson) {
 	};
 	$scope.showTime = function(x) {
 		var date = new Date(x);
-		return date.getHours() + ':00';
+		return date.getHours() + ':' + date.getMinutes();
 	};
 
 	$scope.freeRooms = function(x) {
@@ -138,18 +135,17 @@ function Global($scope, FreeHour, Lessons, NewLesson) {
 
 	// add lesson
 	$scope.addLesson = function(x) {
-		$scope.lessonForm.utcTime.setHours(x.time.unHour);
+		$scope.lessonForm.utcTime.setHours(x.utime.hour);
+		$scope.lessonForm.utcTime.setMinutes(x.utime.minute);
 		var n = {
 			date: $scope.lessonForm.utcTime,
 			lessonId: 0,
 			rooms: [],
-			lessonType: parseInt(x.type)
+			classroom: parseInt(x.classroom),
+            teacher: x.teacher
 		};
 		NewLesson.add(n, function(data) {
 			$scope.info.push(data);
-			$scope.hour = $scope.hour.filter(function(y) {
-				return y != x.time
-			});
 		});
 	};
 

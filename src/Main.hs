@@ -65,12 +65,6 @@ main' conf = scotty (port conf) $ do
         case parseTime defaultTimeLocale "%FT%T%QZ" (unpack utc) of
              Just (x::UTCTime) -> getLessonsList conf x
              Nothing -> status $ Status 400 "Bad Request>"
-    -- get hours list
-    get "/freehour/:utc" $ do
-        utc <- param "utc"
-        case parseTime defaultTimeLocale "%FT%T%QZ" (unpack utc) of
-             Just (x::UTCTime) -> getFreeHour conf x
-             Nothing -> status $ Status 400 "Bad Request>"
     -- add new lesson
     post "/lesson/" $ do
         j <- jsonData
@@ -90,14 +84,6 @@ getLessonsList conf date = do
     a <- liftIO $ query' (state conf) (CurrentLessons date)
     json a
 
-getFreeHour::Configure -> UTCTime -> ActionM ()
-getFreeHour conf date = do
-    zone <- liftIO $ getCurrentTimeZone
-    a <- liftIO $ query' (state conf) (FreeHourByDate zone date)
-    json a
-    
-
-
 getRooms::Configure -> LessonId -> ActionM ()
 getRooms conf lid = do
     less <- liftIO $ query' (state conf) (LessonById lid)
@@ -106,15 +92,8 @@ getRooms conf lid = do
 
 addNewLesson::Configure -> Lesson -> ActionM ()
 addNewLesson conf less = do
-    let d = date less
-    zone <- liftIO $ getCurrentTimeZone
-    free <- liftIO $ query' (state conf) (FreeHourByDate zone d)
-    let hour =  localToHour $ utcToLocalTime zone d
-    if elem hour free
-      then do
-          r <- liftIO $ update' (state conf) (NewLesson less)
-          json r
-      else status $ Status 400 "Bad Request"
+      r <- liftIO $ update' (state conf) (NewLesson less)
+      json r
 
 
 addGuestToRoom::Configure -> Lesson -> ActionM ()

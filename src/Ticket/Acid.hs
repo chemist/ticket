@@ -27,7 +27,12 @@ import Ticket.Data
 newLesson::Lesson -> Update Lessons Lesson
 newLesson l = do
     lessons@Lessons{..} <- S.get
-    let new = Lesson { lessonId = nextLessonId, date = date l, lessonType = lessonType l, rooms = initRoom}
+    let new = Lesson { lessonId = nextLessonId
+                     , date = date l
+                     , teacher = teacher l
+                     , classroom = classroom l
+                     , rooms = initRoom
+                     }
     S.put $ lessons { nextLessonId = succ nextLessonId
                   , lesson = IxSet.insert new lesson}
     return new
