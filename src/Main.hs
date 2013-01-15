@@ -49,15 +49,24 @@ import Ticket.Acid
 
 import Debug.Trace
 
+openAcid = do
+    l <- openLocalState initialLessons
+    g <- openLocalState initialGuests
+    return $ Configure 3000 l g
+    
+closeAcid conf = do
+    createCheckpointAndClose $ state conf
+    createCheckpointAndClose $ guestState conf
 
-main = bracket (openLocalState initialLessons)
-               createCheckpointAndClose
-               (\acid -> main' $ Configure 3000 acid)
+main = bracket openAcid
+               closeAcid
+               main'
 
 main'::Configure -> IO ()
 main' conf = scotty (port conf) $ do
     middleware logStdoutDev
     middleware $ staticPolicy (noDots >-> addBase "static")
+    
     get "/" $ file "static/index.html"
     -- get lessons list
     get "/lessons/:utc" $ do

@@ -34,8 +34,24 @@ import Control.Applicative ((<$>))
 
 newtype LessonId = LessonId { unLessonId::Int }
    deriving (Show, Eq, Ord, Data, Enum, Typeable, SafeCopy, Generic)
+ 
+instance ToJSON LessonId where
+        toJSON (LessonId i) = toJSON i
 
-data Guest = Guest { firstname::Text
+instance FromJSON LessonId where
+        parseJSON i = LessonId <$> parseJSON i
+  
+newtype GuestId = GuestId { unGuestId::Int }
+   deriving (Show, Eq, Ord, Data, Enum, Typeable, SafeCopy, Generic)
+
+instance ToJSON GuestId where
+    toJSON (GuestId i) = toJSON i
+    
+instance FromJSON GuestId where
+    parseJSON i = GuestId <$> parseJSON i
+
+data Guest = Guest { guestid::GuestId
+                   , firstname::Text
                    , secondname::Text
                    , age::Int
                    , phone::Text
@@ -48,10 +64,13 @@ instance ToJSON Guest
 type RoomId = Int
 
 data Room = Room { roomId::RoomId
-                 , guest::Maybe Guest
+                 , guest::Maybe GuestId
                  } deriving (Show, Eq, Ord, Data, Typeable, Generic)
 
 type Rooms = [Room]
+
+instance FromJSON Room
+instance ToJSON Room
 
 data Lesson =  Lesson { lessonId::LessonId
                       , date::UTCTime
@@ -59,30 +78,9 @@ data Lesson =  Lesson { lessonId::LessonId
                       , teacher::String
                       , rooms::Rooms
                       } deriving (Show, Eq, Data, Ord, Typeable, Generic)
-
-instance ToJSON LessonId where
-        toJSON (LessonId i) = toJSON i
-
-instance FromJSON LessonId where
-        parseJSON a = LessonId <$> parseJSON a
-
-instance FromJSON Room
+                      
 instance FromJSON Lesson
-instance ToJSON Room
 instance ToJSON Lesson
-
-newtype Hour = Hour { unHour::Int } 
-   deriving (Show, Eq, Ord, Enum, Data, Typeable, Generic, SafeCopy)
-
-instance FromJSON Hour
-instance ToJSON Hour
-
-newtype JTime = JTime { utcTime::UTCTime }
-   deriving (Show, Eq, Ord, Data, Typeable, Generic, SafeCopy)
-
-instance FromJSON JTime
-instance ToJSON JTime
-
 
 $(deriveSafeCopy 0 'base ''Guest)
 $(deriveSafeCopy 0 'base ''Lesson)
@@ -96,30 +94,32 @@ newtype ClassRoom = ClassRoom Int deriving (Eq, Ord, Data, Typeable, SafeCopy)
 newtype Teacher = Teacher String deriving (Eq, Ord, Data, Typeable, SafeCopy)
 newtype Word = Word Text deriving (Eq, Ord, Data, Typeable, SafeCopy)
 
-utcToHour::UTCTime -> Hour
-utcToHour = Hour . todHour . timeToTimeOfDay . utctDayTime
-
-instance Indexable Guest where
-    empty = ixSet [ ixFun $ \x -> [FirstName $ firstname x]
-                  , ixFun $ \x -> [SecondName $ secondname x]
-                  , ixFun $ \x -> [Age $ age x]
-                  , ixFun $ \x -> [Phone $ phone x]
-                  ]
-
 instance Indexable Lesson where
     empty = ixSet [ ixFun $ \x -> [utctDay $ date x]
-                  , ixFun $ \x -> [ClassRoom $ classroom x]
-                  , ixFun $ \x -> [Teacher $ teacher x]
                   , ixFun $ \x -> [lessonId x]
-                  , ixFun $ \x -> makeIx $ rooms x
                   ]
-            where makeIx x = map (\(Room _ (Just a)) -> map Word  [firstname a, secondname a, phone a]) $ filter (isJust . guest) x
+                  
+instance Indexable Guest where
+    empty = ixSet [ ixFun $ \x -> [ FirstName $ firstname x ]
+                  , ixFun $ \x -> [ SecondName $ secondname x ]
+                  , ixFun $ \x -> [ Phone $ phone x ]
+                  ]
+                                 
 
 data Lessons = Lessons { nextLessonId:: LessonId
                        , lesson:: IxSet Lesson } deriving (Data, Typeable)
+                       
+data Guests = Guests { nextGuestId::GuestId
+                     , iguest:: IxSet Guest } deriving (Data, Typeable)
 
 $(deriveSafeCopy 0 'base ''Lessons)
+$(deriveSafeCopy 0 'base ''Guests)
 
+initialGuests::Guests
+initialGuests = Guests { nextGuestId = GuestId 1
+                       , iguest = empty
+                       }
+                
 initialLessons::Lessons
 initialLessons = Lessons { nextLessonId = LessonId 1
                          , lesson = empty
@@ -128,10 +128,8 @@ initialLessons = Lessons { nextLessonId = LessonId 1
 initRoom::Rooms
 initRoom = map (flip Room Nothing) [1 .. 20]
 
-workHour::[Hour]
-workHour = map Hour [9 .. 20]
-
 data Configure = Configure { port:: Int
                            , state::AcidState Lessons
+                           , guestState::AcidState Guests
                            }
 

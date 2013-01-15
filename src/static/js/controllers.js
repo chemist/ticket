@@ -47,7 +47,8 @@ function Room($scope, $http, $routeParams, Lesson) {
 					secondname: data.secondname ? data.secondname : "",
 					age: data.age ? data.age : 0,
 					phone: data.phone ? data.phone : "",
-					comment: data.comment ? data.comment : ""
+					comment: data.comment ? data.comment : "",
+                    guestid: 0
 				}
 			};
 			$scope.lesson.rooms[freeRoom.roomId - 1] = newRoom;
@@ -89,7 +90,11 @@ function Room($scope, $http, $routeParams, Lesson) {
 
 };
 
-function Global($scope, FreeHour, Lessons, NewLesson) {
+function Global($scope, FreeHour, Lessons, NewLesson, $location) {
+    $scope.go = function(url) {
+        var urll = '/#/lesson/' + url;
+        window.location.href = urll;
+    };
 	$scope.lessonForm = {
 		utcTime: new Date()
 	};

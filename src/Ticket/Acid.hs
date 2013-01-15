@@ -44,11 +44,6 @@ updateLesson updatedLesson = do
        return updatedLesson
 
 
-lessonsByDate::UTCTime -> Query Lessons [Lesson]
-lessonsByDate d = do
-    Lessons{..} <- R.ask
-    return $ IxSet.toDescList (Proxy::Proxy Day) $ lesson @= utctDay d
-
 currentLessons::UTCTime -> Query Lessons [Lesson]
 currentLessons d = do
     let period = (addDays (-2) $ utctDay d, addDays 20 $ utctDay d)
@@ -59,29 +54,43 @@ lessonById::LessonId -> Query Lessons (Maybe Lesson)
 lessonById lid = do
     Lessons{..} <- R.ask
     return $ getOne $ lesson @= lid
+    
+newGuest::Guest -> Update Guests Guest
+newGuest g = do
+    guests@Guests{..} <- S.get
+    let new = Guest { guestid = nextGuestId
+                    , firstname = firstname g
+                    , secondname = secondname g
+                    , phone = phone g
+                    , age = age g
+                    , comment = comment g
+                    }
+    S.put $ guests { nextGuestId = succ nextGuestId
+                   , iguest = IxSet.insert new iguest
+                   }
+    return new
+    
+guestById::GuestId -> Query Guests (Maybe Guest)
+guestById i = do
+    Guests{..} <- R.ask
+    return $ getOne $ iguest @= i
+    
+updateGuest::Guest -> Update Guests Guest
+updateGuest g = do
+    guests@Guests{..} <- S.get
+    S.put $ guests { iguest = IxSet.updateIx (guestid g) g iguest }
+    return g
 
-roomByLessonId::LessonId -> Query Lessons (Maybe Rooms)
-roomByLessonId lid = do
-    Lessons{..} <- R.ask
-    return $ rooms <$> (getOne $ lesson @= lid)
-
-freeHourByDate::TimeZone -> UTCTime -> Query Lessons [Hour]
-freeHourByDate z (UTCTime t _) = do
-    Lessons{..} <- R.ask
-    return $ filter (flip notElem (toHour $ IxSet.toDescList (Proxy::Proxy Day) $ lesson @= t)) workHour
-    where toHour = map (\x -> localToHour $ utcToLocalTime z (date x)) 
-
-localToHour::LocalTime -> Hour
-localToHour = Hour . todHour . localTimeOfDay
 
 $(makeAcidic ''Lessons
   [ 'newLesson
   , 'updateLesson
-  , 'lessonsByDate
   , 'lessonById
-  , 'roomByLessonId
   , 'currentLessons
-  , 'freeHourByDate
+  ])
+ 
+$(makeAcidic ''Guests
+  [ 'guestById
   ])
 
 

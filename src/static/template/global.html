@@ -23,14 +23,14 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="l in info " onclick="document.location = '#lesson/{{l.lessonId}}';">
+        <tr ng-repeat="l in info " ng-click="go(l.lessonId);">
         <th>{{l.lessonId}}</th>
         <th>{{showDate(l.date)}}</th>
         <th>{{showTime(l.date)}}</th>
         <th>{{l.classroom}}</th>
         <th>{{l.teacher}}</th>
-        <th>{{freeRooms(l.rooms)}}</th>
         <th>{{closeRooms(l.rooms)}}</th>
+        <th>{{freeRooms(l.rooms)}}</th>
       </tr>
     </tbody>
   </table>
