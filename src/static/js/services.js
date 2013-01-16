@@ -24,14 +24,6 @@ angular.module('ticket.services', ['ngResource']).
                  }
       });
   }).
-  factory('NewLesson', function($resource) {
-      return $resource('/lesson/', {}, {
-          add: {
-                   method: 'POST',
-                   isArray: false
-               }
-      });
-  }).
   factory('Lesson', function($resource) {
       return $resource('lesson/:id', {}, {
           get: {
@@ -43,6 +35,32 @@ angular.module('ticket.services', ['ngResource']).
                     method: 'POST',
                     params: {id: 'id'},
                     isArray: false
-                }
+                },
+          add: {
+                   method: 'POST',
+                   isArray: false
+               }
+      });
+  }).
+  factory('Guest', function($resource) {
+      return $resource('/guest/:id', {}, {
+          get: {
+              method: 'GET',
+              params: {id: 'id'},
+              isArray: false
+          },
+          post:{
+              method: 'POST',
+              params: {id: 'id'},
+              isArray: false
+          },
+          query: {
+              method: 'GET',
+              isArray: true
+          },
+          add: {
+              method: 'POST',
+              isArray: false
+          }
       });
   });

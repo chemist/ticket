@@ -16,11 +16,10 @@ Date.prototype.toLocaleDateString = function() {
 };
 
 
-function Room($scope, $http, $routeParams, Lesson) {
+function Room($scope, $http, $routeParams, Lesson, Guest) {
 	$scope.lesson = Lesson.get({
 		id: $routeParams.id
 	});
-
 	// trigger for green | red class in css
 	$scope.setColor = function(x) {
 		return (x.guest === null) ? "badge badge-warning" : "badge badge-success";
@@ -39,19 +38,23 @@ function Room($scope, $http, $routeParams, Lesson) {
 				return x.guest === null;
 			})[0]
 		};
-		if (freeRoom) {
-			var newRoom = {
-				roomId: freeRoom.roomId,
-				guest: {
+        var guest = {
 					firstname: data.firstname ? data.firstname : "",
 					secondname: data.secondname ? data.secondname : "",
 					age: data.age ? data.age : 0,
 					phone: data.phone ? data.phone : "",
 					comment: data.comment ? data.comment : "",
                     guestid: 0
-				}
-			};
+				};
+        var res = Guest.add({}, guest);
+        console.log(res);
+		if (freeRoom) {
+			var newRoom = {
+				roomId: freeRoom.roomId,
+				guest: res.guestid
+            };
 			$scope.lesson.rooms[freeRoom.roomId - 1] = newRoom;
+            
 			Lesson.post({
 				id: $routeParams.id
 			}, $scope.lesson);
@@ -90,7 +93,7 @@ function Room($scope, $http, $routeParams, Lesson) {
 
 };
 
-function Global($scope, FreeHour, Lessons, NewLesson, $location) {
+function Global($scope, FreeHour, Lessons, Lesson, $location) {
     $scope.go = function(url) {
         var urll = '/#/lesson/' + url;
         window.location.href = urll;
@@ -149,7 +152,7 @@ function Global($scope, FreeHour, Lessons, NewLesson, $location) {
 			classroom: parseInt(x.classroom),
             teacher: x.teacher
 		};
-		NewLesson.add(n, function(data) {
+		Lesson.add(n, function(data) {
 			$scope.info.push(data);
 		});
 	};

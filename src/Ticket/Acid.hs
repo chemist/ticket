@@ -75,6 +75,11 @@ guestById i = do
     Guests{..} <- R.ask
     return $ getOne $ iguest @= i
     
+queryGuests::Query Guests [Guest]
+queryGuests = do
+    Guests{..} <- R.ask
+    return $ IxSet.toList iguest
+    
 updateGuest::Guest -> Update Guests Guest
 updateGuest g = do
     guests@Guests{..} <- S.get
@@ -91,6 +96,9 @@ $(makeAcidic ''Lessons
  
 $(makeAcidic ''Guests
   [ 'guestById
+  , 'queryGuests
+  , 'newGuest
+  , 'updateGuest
   ])
 
 

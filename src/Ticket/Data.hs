@@ -103,6 +103,7 @@ instance Indexable Guest where
     empty = ixSet [ ixFun $ \x -> [ FirstName $ firstname x ]
                   , ixFun $ \x -> [ SecondName $ secondname x ]
                   , ixFun $ \x -> [ Phone $ phone x ]
+                  , ixFun $ \x -> [ guestid x ]
                   ]
                                  
 

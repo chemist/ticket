@@ -87,6 +87,17 @@ main' conf = scotty (port conf) $ do
         _ <- LessonId <$> param "id"
         j <- jsonData
         addGuestToRoom conf j
+        
+    -- get guests
+    get "/guest/" $ getGuests conf
+    -- get guest by id
+    get "/guest/:id" $ do
+        lid <- GuestId <$> param "id"
+        getGuest conf lid
+    -- add guest
+    post "/guest/" $ do
+        j <- jsonData
+        addNewGuest conf j
 
 getLessonsList::Configure -> UTCTime -> ActionM ()
 getLessonsList conf date = do
@@ -110,3 +121,17 @@ addGuestToRoom conf  less = do
     a <- liftIO $ update' (state conf) (UpdateLesson less)
     json a
 
+getGuests::Configure -> ActionM ()
+getGuests conf = do
+    a <- liftIO $ query' (guestState conf) QueryGuests 
+    json a
+    
+addNewGuest::Configure -> Guest -> ActionM ()
+addNewGuest conf g = do
+    a <- liftIO $ update' (guestState conf) (NewGuest g)
+    json a
+    
+getGuest::Configure -> GuestId -> ActionM ()
+getGuest conf lid = do
+    a <- liftIO $ query' (guestState conf) (GuestById lid)
+    json a
