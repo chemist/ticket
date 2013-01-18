@@ -24,9 +24,9 @@ import Data.IxSet
 import qualified Data.IxSet as IxSet
 import Ticket.Data
 
-newLesson::Lesson -> Update Lessons Lesson
+newLesson::Lesson -> Update Ticket Lesson
 newLesson l = do
-    lessons@Lessons{..} <- S.get
+    lessons@Ticket{..} <- S.get
     let new = Lesson { lessonId = nextLessonId
                      , date = date l
                      , teacher = teacher l
@@ -37,27 +37,35 @@ newLesson l = do
                   , lesson = IxSet.insert new lesson}
     return new
 
-updateLesson::Lesson -> Update Lessons Lesson
+updateLesson::Lesson -> Update Ticket Lesson
 updateLesson updatedLesson = do
-       l@Lessons{..} <- S.get
+       l@Ticket{..} <- S.get
        S.put $ l { lesson = IxSet.updateIx (lessonId updatedLesson) updatedLesson lesson }
        return updatedLesson
 
 
-currentLessons::UTCTime -> Query Lessons [Lesson]
+currentLessons::UTCTime -> Query Ticket [Lesson]
 currentLessons d = do
     let period = (addDays (-2) $ utctDay d, addDays 20 $ utctDay d)
-    Lessons{..} <- R.ask
+    Ticket{..} <- R.ask
     return $ IxSet.toDescList (Proxy::Proxy Day) $ lesson @>< period
 
-lessonById::LessonId -> Query Lessons (Maybe Lesson)
+lessonById::LessonId -> Query Ticket (Maybe Lesson)
 lessonById lid = do
-    Lessons{..} <- R.ask
-    return $ getOne $ lesson @= lid
+    Ticket{..} <- R.ask
+    let res = getOne $ lesson @= lid
+        fun::Maybe Guest -> Maybe Guest
+        fun (Just x) = getOne $ iguest @= guestid x
+        fun Nothing = Nothing
+    return $ doLesson fun <$> res
     
-newGuest::Guest -> Update Guests Guest
+doLesson::(Maybe Guest -> Maybe Guest) -> Lesson -> Lesson
+doLesson fun less = let rooms' = map (\x -> Room (roomId x) (fun $ guest x)) $ rooms less
+                    in less { rooms = rooms' }
+                    
+newGuest::Guest -> Update Ticket Guest
 newGuest g = do
-    guests@Guests{..} <- S.get
+    guests@Ticket{..} <- S.get
     let new = Guest { guestid = nextGuestId
                     , firstname = firstname g
                     , secondname = secondname g
@@ -70,35 +78,33 @@ newGuest g = do
                    }
     return new
     
-guestById::GuestId -> Query Guests (Maybe Guest)
+guestById::GuestId -> Query Ticket (Maybe Guest)
 guestById i = do
-    Guests{..} <- R.ask
+    Ticket{..} <- R.ask
     return $ getOne $ iguest @= i
     
-queryGuests::Query Guests [Guest]
+queryGuests::Query Ticket [Guest]
 queryGuests = do
-    Guests{..} <- R.ask
+    Ticket{..} <- R.ask
     return $ IxSet.toList iguest
     
-updateGuest::Guest -> Update Guests Guest
+updateGuest::Guest -> Update Ticket Guest
 updateGuest g = do
-    guests@Guests{..} <- S.get
+    guests@Ticket{..} <- S.get
     S.put $ guests { iguest = IxSet.updateIx (guestid g) g iguest }
     return g
 
 
-$(makeAcidic ''Lessons
+$(makeAcidic ''Ticket
   [ 'newLesson
   , 'updateLesson
   , 'lessonById
   , 'currentLessons
-  ])
- 
-$(makeAcidic ''Guests
-  [ 'guestById
+  , 'guestById
   , 'queryGuests
   , 'newGuest
   , 'updateGuest
   ])
+ 
 
 

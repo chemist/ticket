@@ -30,7 +30,8 @@ import GHC.Generics
 import Data.SafeCopy
 import Data.IxSet
 import Data.Aeson
-import Control.Applicative ((<$>))
+import Control.Applicative ((<$>), (<|>), (<*>))
+import Control.Monad 
 
 newtype LessonId = LessonId { unLessonId::Int }
    deriving (Show, Eq, Ord, Data, Enum, Typeable, SafeCopy, Generic)
@@ -50,21 +51,39 @@ instance ToJSON GuestId where
 instance FromJSON GuestId where
     parseJSON i = GuestId <$> parseJSON i
 
-data Guest = Guest { guestid::GuestId
+data Guest = GID { guestid :: GuestId }
+           | Guest { guestid::GuestId
                    , firstname::Text
                    , secondname::Text
                    , age::Int
                    , phone::Text
                    , comment::Text
                    } deriving (Show, Eq, Data, Ord, Typeable, Generic)
-
-instance FromJSON Guest
-instance ToJSON Guest
+                   
+instance ToJSON Guest where
+    toJSON (GID x) = object [ "gid"   .= toJSON x ]
+    toJSON x = object [ "guestid"     .= (toJSON . guestid) x
+                      , "firstname"   .= (toJSON . firstname) x
+                      , "secondname"  .= (toJSON . secondname) x
+                      , "age"         .= (toJSON . age) x
+                      , "phone"       .= (toJSON . phone) x
+                      , "comment"     .= (toJSON . comment) x
+                      ]
+                      
+instance FromJSON Guest where
+    parseJSON (Object v) = GID   <$> v .: "gid" <|>
+                           Guest <$> v .: "guestid" 
+                                  <*>  v .: "firstname"
+                                  <*>  v .: "secondname"
+                                  <*>  v .: "age"
+                                  <*>  v .: "phone"
+                                  <*>  v .: "comment"
+    parseJSON _ = mzero
 
 type RoomId = Int
 
 data Room = Room { roomId::RoomId
-                 , guest::Maybe GuestId
+                 , guest::Maybe Guest
                  } deriving (Show, Eq, Ord, Data, Typeable, Generic)
 
 type Rooms = [Room]
@@ -81,6 +100,7 @@ data Lesson =  Lesson { lessonId::LessonId
                       
 instance FromJSON Lesson
 instance ToJSON Lesson
+
 
 $(deriveSafeCopy 0 'base ''Guest)
 $(deriveSafeCopy 0 'base ''Lesson)
@@ -107,30 +127,25 @@ instance Indexable Guest where
                   ]
                                  
 
-data Lessons = Lessons { nextLessonId:: LessonId
-                       , lesson:: IxSet Lesson } deriving (Data, Typeable)
+data Ticket = Ticket { nextLessonId:: LessonId
+                     , nextGuestId::GuestId
+                     , lesson:: IxSet Lesson 
+                     , iguest:: IxSet Guest 
+                     } deriving (Data, Typeable)
                        
-data Guests = Guests { nextGuestId::GuestId
-                     , iguest:: IxSet Guest } deriving (Data, Typeable)
+$(deriveSafeCopy 0 'base ''Ticket)
 
-$(deriveSafeCopy 0 'base ''Lessons)
-$(deriveSafeCopy 0 'base ''Guests)
-
-initialGuests::Guests
-initialGuests = Guests { nextGuestId = GuestId 1
+initialTicket::Ticket
+initialTicket = Ticket { nextGuestId = GuestId 1
+                       , nextLessonId = LessonId 1
                        , iguest = empty
+                       , lesson = empty
                        }
                 
-initialLessons::Lessons
-initialLessons = Lessons { nextLessonId = LessonId 1
-                         , lesson = empty
-                         }
-
 initRoom::Rooms
 initRoom = map (flip Room Nothing) [1 .. 20]
 
 data Configure = Configure { port:: Int
-                           , state::AcidState Lessons
-                           , guestState::AcidState Guests
+                           , state::AcidState Ticket
                            }
 

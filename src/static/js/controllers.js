@@ -51,7 +51,7 @@ function Room($scope, $http, $routeParams, Lesson, Guest) {
 		if (freeRoom) {
 			var newRoom = {
 				roomId: freeRoom.roomId,
-				guest: res.guestid
+				guest: { gid: res.guestid }
             };
 			$scope.lesson.rooms[freeRoom.roomId - 1] = newRoom;
             

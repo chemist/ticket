@@ -50,13 +50,10 @@ import Ticket.Acid
 import Debug.Trace
 
 openAcid = do
-    l <- openLocalState initialLessons
-    g <- openLocalState initialGuests
-    return $ Configure 3000 l g
+    l <- openLocalState initialTicket
+    return $ Configure 3000 l 
     
-closeAcid conf = do
-    createCheckpointAndClose $ state conf
-    createCheckpointAndClose $ guestState conf
+closeAcid = createCheckpointAndClose . state 
 
 main = bracket openAcid
                closeAcid
@@ -123,15 +120,15 @@ addGuestToRoom conf  less = do
 
 getGuests::Configure -> ActionM ()
 getGuests conf = do
-    a <- liftIO $ query' (guestState conf) QueryGuests 
+    a <- liftIO $ query' (state conf) QueryGuests 
     json a
     
 addNewGuest::Configure -> Guest -> ActionM ()
 addNewGuest conf g = do
-    a <- liftIO $ update' (guestState conf) (NewGuest g)
+    a <- liftIO $ update' (state conf) (NewGuest g)
     json a
     
 getGuest::Configure -> GuestId -> ActionM ()
 getGuest conf lid = do
-    a <- liftIO $ query' (guestState conf) (GuestById lid)
+    a <- liftIO $ query' (state conf) (GuestById lid)
     json a
