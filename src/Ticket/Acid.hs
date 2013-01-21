@@ -23,6 +23,7 @@ import Data.Acid ( IsAcidic(..)
 import Data.IxSet
 import qualified Data.IxSet as IxSet
 import Ticket.Data
+import Debug.Trace
 
 newLesson::Lesson -> Update Ticket Lesson
 newLesson l = do
@@ -37,11 +38,11 @@ newLesson l = do
                   , lesson = IxSet.insert new lesson}
     return new
 
-updateLesson::Lesson -> Update Ticket Lesson
+updateLesson::Lesson -> Update Ticket ()
 updateLesson updatedLesson = do
        l@Ticket{..} <- S.get
        S.put $ l { lesson = IxSet.updateIx (lessonId updatedLesson) updatedLesson lesson }
-       return updatedLesson
+       return ()
 
 
 currentLessons::UTCTime -> Query Ticket [Lesson]
@@ -57,10 +58,10 @@ lessonById lid = do
         fun::Maybe Guest -> Maybe Guest
         fun (Just x) = getOne $ iguest @= guestid x
         fun Nothing = Nothing
-    return $ doLesson fun <$> res
+    return $ fromIdToGuest fun <$> res
     
-doLesson::(Maybe Guest -> Maybe Guest) -> Lesson -> Lesson
-doLesson fun less = let rooms' = map (\x -> Room (roomId x) (fun $ guest x)) $ rooms less
+fromIdToGuest::(Maybe Guest -> Maybe Guest) -> Lesson -> Lesson
+fromIdToGuest fun less = let rooms' = map (\x -> Room (roomId x) (fun $ guest x)) $ rooms less
                     in less { rooms = rooms' }
                     
 newGuest::Guest -> Update Ticket Guest

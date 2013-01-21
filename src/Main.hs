@@ -115,8 +115,9 @@ addNewLesson conf less = do
 
 addGuestToRoom::Configure -> Lesson -> ActionM ()
 addGuestToRoom conf  less = do
-    a <- liftIO $ update' (state conf) (UpdateLesson less)
-    json a
+    _ <- liftIO $ update' (state conf) (UpdateLesson less)
+    less <- liftIO $ query' (state conf) (LessonById $ lessonId less)
+    json less
 
 getGuests::Configure -> ActionM ()
 getGuests conf = do
