@@ -30,8 +30,9 @@ import GHC.Generics
 import Data.SafeCopy
 import Data.IxSet
 import Data.Aeson
-import Control.Applicative ((<$>), (<|>), (<*>))
+import Control.Applicative hiding (empty)
 import Control.Monad 
+import Web.Scotty
 
 newtype LessonId = LessonId { unLessonId::Int }
    deriving (Show, Eq, Ord, Data, Enum, Typeable, SafeCopy, Generic)
@@ -148,4 +149,3 @@ initRoom = map (flip Room Nothing) [1 .. 20]
 data Configure = Configure { port:: Int
                            , state::AcidState Ticket
                            }
-
