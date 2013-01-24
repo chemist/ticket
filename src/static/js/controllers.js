@@ -20,12 +20,13 @@ function Login($scope, $http) {
         $http.post('/login', data).success(function(x) {
             var urll = '/#/global/';
             window.location.href = urll;
+        }).error(function(x) {
+            $(".alert").removeClass("hide")
         });
     };
 };
 
 function redirectToLogin(data) {
-    console.log("redirect", data);
     window.location.href = "/#/login";
 };
 

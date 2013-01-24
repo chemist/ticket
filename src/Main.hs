@@ -52,10 +52,9 @@ main = bracket openAcid
 
 main'::Configure -> IO ()
 main' conf = scotty (port conf) $ do
-    --
 
     let session = session' conf
-        store = store' conf
+        store   = store'   conf
     middleware logStdoutDev
     middleware $ staticPolicy (noDots >-> addBase "static")
     middleware $ withSession store (fromString "session") def session
@@ -120,7 +119,7 @@ main' conf = scotty (port conf) $ do
         v' <- vault <$> request
         let Just (lSession, _) = Vault.lookup session v'
         check <- lSession "authorized"
-        when (check == Just True) $ do
+        unless (check == Just True) $ do
             status status401
             text "not authorized"
         

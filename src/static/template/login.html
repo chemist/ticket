@@ -1,20 +1,21 @@
 <div class="container">
   <div class="content">
     <div class="row">
-      <div class="login-form span12 offset5">
+      <div class="login-form span6 offset5">
         <h2>Авторизация</h2>
         <form name="form" ng-submit="login(form)">
           <fieldset>
             <div class="clearfix">
-              <input ng-model="form.login" type="text" placeholder="Логин">
+              <input ng-model="form.login" type="text" required placeholder="Логин">
             </div>
             <div class="clearfix">
-              <input ng-model="form.password" type="password" placeholder="Пароль">
+              <input ng-model="form.password" type="password" required placeholder="Пароль">
             </div>
             <button class="btn btn-primary" type="submit">Войти</button>
           </fieldset>
         </form>
       </div>
+      <label class="alert alert-error span9 offset1 hide">Неправильно введен логин пароль!</label>
     </div>
   </div>
 </div>
