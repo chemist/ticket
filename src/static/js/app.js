@@ -4,7 +4,8 @@ angular.module('ticket', ['ticket.filters', 'ticket.services', 'ticket.directive
   config(['$routeProvider', function($routeProvider) {
     $routeProvider.when('/global', {templateUrl: 'template/global.html', controller: Global});
     $routeProvider.when('/lesson/:id', {templateUrl: 'template/room.html', controller: Room});
-    $routeProvider.otherwise({redirectTo: '/global'});
+    $routeProvider.when('/login', {templateUrl: 'template/login.html', controller: Login});
+    $routeProvider.otherwise({redirectTo: '/login'});
   }]);
 
 

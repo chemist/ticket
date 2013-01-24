@@ -33,6 +33,8 @@ import Data.Aeson
 import Control.Applicative hiding (empty)
 import Control.Monad 
 import Web.Scotty
+import Network.Wai.Session 
+import qualified Data.Vault as Vault
 
 newtype LessonId = LessonId { unLessonId::Int }
    deriving (Show, Eq, Ord, Data, Enum, Typeable, SafeCopy, Generic)
@@ -80,6 +82,11 @@ instance FromJSON Guest where
                                   <*>  v .: "phone"
                                   <*>  v .: "comment"
     parseJSON _ = mzero
+
+data Login = Login { login::Text, password::Text } deriving (Show)
+
+instance FromJSON Login where
+    parseJSON (Object v) = Login <$> v .: "login" <*> v .: "password" 
 
 type RoomId = Int
 
@@ -148,4 +155,7 @@ initRoom = map (flip Room Nothing) [1 .. 20]
 
 data Configure = Configure { port:: Int
                            , state::AcidState Ticket
+                           , session'::Vault.Key (Session ActionM Text Bool)
+                           , store'::SessionStore ActionM Text Bool
                            }
+                           

@@ -15,10 +15,25 @@ Date.prototype.toLocaleDateString = function() {
 
 };
 
+function Login($scope, $http) {
+    $scope.login = function(data) {
+        $http.post('/login', data).success(function(x) {
+            var urll = '/#/global/';
+            window.location.href = urll;
+        });
+    };
+};
+
+function redirectToLogin(data) {
+    console.log("redirect", data);
+    window.location.href = "/#/login";
+};
 
 function Room($scope, $http, $routeParams, Lesson, Guest) {
     $scope.lesson = Lesson.get({
         id: $routeParams.id
+    }, function() {}, function(data) {
+        redirectToLogin(data);
     });
     // trigger for green | red class in css
     $scope.setColor = function(x) {
@@ -110,6 +125,8 @@ function Global($scope, FreeHour, Lessons, Lesson, $location) {
     $scope.loadInfo = function() {
         $scope.info = Lessons.query({
             time: $scope.lessonForm.utcTime.toISOString()
+        }, function() {}, function(x) {
+            redirectToLogin(x);
         });
     };
     $scope.showDate = function(x) {

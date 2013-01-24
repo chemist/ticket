@@ -21,7 +21,7 @@ import Control.Monad
 import Network.Wai
 import Network.Wai.Middleware.RequestLogger
 import Network.Wai.Middleware.Static
-import Network.Wai.Session hiding (withSession)
+import Network.Wai.Session 
 import Network.Wai.Session.Map
 import Data.Time
 import Data.ByteString.Lazy (ByteString)
@@ -53,77 +53,109 @@ import qualified Data.Vault as Vault
 import Data.String (fromString)
 import Data.Default (def)
 import Web.Cookie (parseCookies, renderSetCookie, SetCookie(..))
+import Network.HTTP.Types.Status
 
 import Debug.Trace
 
+openAcid ::  IO Configure
 openAcid = do
     l <- openLocalState initialTicket
     session <- Vault.newKey
-    store <- mapStore_ :: IO (SessionStore ActionM Text Text)
-    return $ Configure 3000 l 
+    store <- mapStore_ 
+    return $ Configure 3000 l session store
     
+closeAcid ::  Configure -> IO ()
 closeAcid = createCheckpointAndClose . state 
 
+main::IO ()
 main = bracket openAcid
                closeAcid
                main'
 
-withSession::SessionStore m k v -> ByteString -> SetCookie -> Vault.Key (Session m k v) -> ActionM (Session m k v)
-withSession = undefined
-
 main'::Configure -> IO ()
-main' conf = do
-    session <- Vault.newKey
-    store <- mapStore_ :: IO (SessionStore ActionM Text Text)
-    scotty (port conf) $ do
-        middleware logStdoutDev
-        middleware $ staticPolicy (noDots >-> addBase "static")
-        {-
-        -- let fff = withSession store (fromString "SESSION") def session 
-        let fff = \x -> middleware $ withSession store (fromString "SESSION") def x
-            ciCookie = fromString "Cookie"
-            cookies = do
-                req <- request
-                return $ fmap parseCookies $ lookup ciCookie (requestHeaders req)
-                -}
+main' conf = scotty (port conf) $ do
+    --
+
+    let session = session' conf
+        store = store' conf
+    middleware logStdoutDev
+    middleware $ staticPolicy (noDots >-> addBase "static")
+    middleware $ withSession store (fromString "session") def session
+    
+    get "/" $ file "static/index.html"
+
+    post "/login" $ do
+        j <- jsonData
+        v <- vault <$> request
+        let Just (_, sSession) = Vault.lookup session v
+        case j of
+              Login "chemist" "123" -> do
+                  sSession "authorized" True
+                  status status200 
+                  text "welcom"
+              _ -> do
+                  sSession "authorized" False
+                  status status401
+                  text "not authorized"
+
+    -- get lessons list
+    get "/lessons/:utc" $ do
+        checkAuthorization session
+        utc <- param "utc"
+        case parseTime defaultTimeLocale "%FT%T%QZ" (unpack utc) of
+             Just (x::UTCTime) -> getLessonsList conf x
+             Nothing -> status $ Status 400 "Bad Request>"
+    -- add new lesson
+    post "/lesson/" $ do
+        checkAuthorization session
+        j <- jsonData
+        addNewLesson conf j
+    -- get  room by lesson
+    get "/lesson/:id" $ do
+        checkAuthorization session
+        lid <- LessonId <$> param "id"
+        getRooms conf lid
+    -- edit lesson where id is lesson id 
+    post "/lesson/:id" $ do
+        checkAuthorization session
+        _ <- LessonId <$> param "id"
+        j <- jsonData
+        addGuestToRoom conf j
         
-        get "/" $ file "static/index.html"
-        -- get lessons list
-        get "/lessons/:utc" $ do
-            cookie <- withSession store "SESSION" def session
-            req <- request
-            liftIO $ print $ rawPathInfo req
-            utc <- param "utc"
-            case parseTime defaultTimeLocale "%FT%T%QZ" (unpack utc) of
-                 Just (x::UTCTime) -> getLessonsList conf x
-                 Nothing -> status $ Status 400 "Bad Request>"
-        -- add new lesson
-        post "/lesson/" $ do
-            j <- jsonData
-            addNewLesson conf j
-        -- get  room by lesson
-        get "/lesson/:id" $ do
-            lid <- LessonId <$> param "id"
-            getRooms conf lid
-        -- edit lesson where id is lesson id 
-        post "/lesson/:id" $ do
-            _ <- LessonId <$> param "id"
-            j <- jsonData
-            addGuestToRoom conf j
-            
-        -- get guests
-        get "/guest/" $ getGuests conf
-        -- get guest by id
-        get "/guest/:id" $ do
-            lid <- GuestId <$> param "id"
-            getGuest conf lid
-        -- add guest
-        post "/guest/" $ do
-            j <- jsonData
-            addNewGuest conf j
+    -- get guests
+    get "/guest/" $ do
+        checkAuthorization session
+        getGuests conf
+    -- get guest by id
+    get "/guest/:id" $ do
+        checkAuthorization session
+        lid <- GuestId <$> param "id"
+        getGuest conf lid
+    -- add guest
+    post "/guest/" $ do
+        checkAuthorization session
+        j <- jsonData
+        addNewGuest conf j
+
+    -- ^ if not authorized, status 401
+    notFound $ do
+        v <- vault <$> request
+        let Just (lSession, _) = Vault.lookup session v
+        check <- lSession "authorized"
+        when (check == Just True) $ do
+            status status401
+            text "not authorized"
         
-fff::RoutePattern
-fff = "/"
+-- ^ when user not authorized, go next route
+checkAuthorization::Vault.Key (Session ActionM Text Bool) -> ActionM ()
+checkAuthorization session = do
+    v <- vault <$> request
+    let Just (lSession, _) = Vault.lookup session v
+    check <- lSession "authorized"
+    case check of
+         Just True -> return ()
+         _ -> next
+
         
 getLessonsList::Configure -> UTCTime -> ActionM ()
 getLessonsList conf date = do
