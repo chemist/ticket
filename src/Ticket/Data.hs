@@ -12,18 +12,8 @@
 module Ticket.Data where
 
 import Data.Text.Lazy hiding (map, filter, empty)
-import Data.Maybe
 import Data.Time
-import Data.Acid ( IsAcidic(..)
-                 , AcidState(..)
-                 , EventState(..)
-                 , EventResult(..)
-                 , Update(..)
-                 , Query(..)
-                 , QueryEvent(..)
-                 , UpdateEvent(..)
-                 , makeAcidic
-                 , openLocalState)
+import Data.Acid ( AcidState(..))
                  
 import Data.Data
 import GHC.Generics

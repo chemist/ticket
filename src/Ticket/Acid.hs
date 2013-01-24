@@ -7,23 +7,15 @@ module Ticket.Acid where
 import Control.Applicative hiding (empty)
 import qualified Control.Monad.Reader as R
 import qualified Control.Monad.State as S
-import Data.Text.Lazy hiding (map, filter, empty)
 import Data.Time
-import Data.Acid ( IsAcidic(..)
-                 , AcidState(..)
-                 , EventState(..)
-                 , EventResult(..)
-                 , Update(..)
-                 , Query(..)
-                 , QueryEvent(..)
-                 , UpdateEvent(..)
-                 , makeAcidic
-                 , openLocalState)
+import Data.Acid ( Query
+                 , Update
+                 , makeAcidic)
                  
 import Data.IxSet
 import qualified Data.IxSet as IxSet
 import Ticket.Data
-import Debug.Trace
+-- import Debug.Trace
 
 newLesson::Lesson -> Update Ticket Lesson
 newLesson l = do

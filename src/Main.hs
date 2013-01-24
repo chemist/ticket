@@ -12,11 +12,7 @@ module Main where
 import Web.Scotty
 import Control.Applicative hiding (empty)
 import Control.Monad.IO.Class
-import Control.Monad.Trans
-import qualified Control.Monad.Reader as R
-import qualified Control.Monad.State as S
 import Data.Text.Lazy hiding (map, filter, empty)
-import Data.Maybe
 import Control.Monad
 import Network.Wai
 import Network.Wai.Middleware.RequestLogger
@@ -24,27 +20,10 @@ import Network.Wai.Middleware.Static
 import Network.Wai.Session 
 import Network.Wai.Session.Map
 import Data.Time
-import Data.ByteString.Lazy (ByteString)
-import qualified Data.Aeson as A
-import Data.Acid ( IsAcidic(..)
-                 , AcidState(..)
-                 , EventState(..)
-                 , EventResult(..)
-                 , Update(..)
-                 , Query(..)
-                 , QueryEvent(..)
-                 , UpdateEvent(..)
-                 , makeAcidic
-                 , openLocalState)
+import Data.Acid ( openLocalState )
 import Data.Acid.Local (createCheckpointAndClose)
 import Data.Acid.Advanced ( query', update' )
 import Control.Exception (bracket)
-import Data.Data
-import GHC.Generics
-import Data.SafeCopy
-import Data.IxSet
-import qualified Data.IxSet as IxSet
-import Network.HTTP.Types (Status(..))
 import System.Locale (defaultTimeLocale)
 import Ticket.Data
 import Ticket.Acid
@@ -52,10 +31,9 @@ import Ticket.Acid
 import qualified Data.Vault as Vault
 import Data.String (fromString)
 import Data.Default (def)
-import Web.Cookie (parseCookies, renderSetCookie, SetCookie(..))
 import Network.HTTP.Types.Status
 
-import Debug.Trace
+-- import Debug.Trace
 
 openAcid ::  IO Configure
 openAcid = do
@@ -101,8 +79,8 @@ main' conf = scotty (port conf) $ do
     -- get lessons list
     get "/lessons/:utc" $ do
         checkAuthorization session
-        utc <- param "utc"
-        case parseTime defaultTimeLocale "%FT%T%QZ" (unpack utc) of
+        utc' <- param "utc"
+        case parseTime defaultTimeLocale "%FT%T%QZ" (unpack utc') of
              Just (x::UTCTime) -> getLessonsList conf x
              Nothing -> status $ Status 400 "Bad Request>"
     -- add new lesson
@@ -139,8 +117,8 @@ main' conf = scotty (port conf) $ do
 
     -- ^ if not authorized, status 401
     notFound $ do
-        v <- vault <$> request
-        let Just (lSession, _) = Vault.lookup session v
+        v' <- vault <$> request
+        let Just (lSession, _) = Vault.lookup session v'
         check <- lSession "authorized"
         when (check == Just True) $ do
             status status401
@@ -158,8 +136,8 @@ checkAuthorization session = do
 
         
 getLessonsList::Configure -> UTCTime -> ActionM ()
-getLessonsList conf date = do
-    a <- liftIO $ query' (state conf) (CurrentLessons date)
+getLessonsList conf date' = do
+    a <- liftIO $ query' (state conf) (CurrentLessons date')
     json a
 
 getRooms::Configure -> LessonId -> ActionM ()
@@ -177,8 +155,8 @@ addNewLesson conf less = do
 addGuestToRoom::Configure -> Lesson -> ActionM ()
 addGuestToRoom conf  less = do
     _ <- liftIO $ update' (state conf) (UpdateLesson less)
-    less <- liftIO $ query' (state conf) (LessonById $ lessonId less)
-    json less
+    less' <- liftIO $ query' (state conf) (LessonById $ lessonId less)
+    json less'
 
 getGuests::Configure -> ActionM ()
 getGuests conf = do
