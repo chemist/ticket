@@ -6,11 +6,10 @@
 // Demonstrate how to register services
 // In this case it is a simple value service.
 angular.module('ticket.services', ['ngResource']).
-  factory('FreeHour', function($resource){
-      return $resource('/freehour/:time', {}, {
-          query: {
+  factory('Users', function($resource){
+      return $resource('/users', {}, {
+          get: {
                      method:'GET',
-                     params:{time: 'time'}, 
                      isArray:true}
       });
 

@@ -15,6 +15,19 @@ Date.prototype.toLocaleDateString = function() {
 
 };
 
+function Settings($scope, $http, Users) {
+    $scope.users = Users.get();
+    $scope.addUser = function(data) {
+        $http.post('/auth', data).success(function() {
+            $scope.users = Users.get();
+        }).error(function(x) {
+            console.log("fail when try add user", x);
+            var url = '/#/global/';
+            window.location.href = url;
+        });
+    };
+};
+
 function Login($scope, $http) {
     $scope.login = function(data) {
         $http.post('/login', data).success(function(x) {
@@ -114,7 +127,7 @@ function Room($scope, $http, $routeParams, Lesson, Guest) {
 
 };
 
-function Global($scope, FreeHour, Lessons, Lesson, $location) {
+function Global($scope, Lessons, Lesson, $location) {
     $scope.go = function(url) {
         var urll = '/#/lesson/' + url;
         window.location.href = urll;

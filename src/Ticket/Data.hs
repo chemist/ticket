@@ -25,6 +25,8 @@ import Control.Monad
 import Web.Scotty
 import Network.Wai.Session 
 import qualified Data.Vault as Vault
+import Crypto.PasswordStore
+import Data.ByteString (ByteString)
 
 newtype LessonId = LessonId { unLessonId::Int }
    deriving (Show, Eq, Ord, Data, Enum, Typeable, SafeCopy, Generic)
@@ -73,10 +75,15 @@ instance FromJSON Guest where
                                   <*>  v .: "comment"
     parseJSON _ = mzero
 
-data Login = Login { login::Text, password::Text } deriving (Show)
+
+data Login = Login { login::ByteString, password::ByteString } deriving (Show, Data, Eq, Typeable, Ord)
 
 instance FromJSON Login where
     parseJSON (Object v) = Login <$> v .: "login" <*> v .: "password" 
+
+instance ToJSON Login where
+    toJSON x = object [ "login" .= (toJSON . login) x ]
+
 
 type RoomId = Int
 
@@ -103,6 +110,7 @@ instance ToJSON Lesson
 $(deriveSafeCopy 0 'base ''Guest)
 $(deriveSafeCopy 0 'base ''Lesson)
 $(deriveSafeCopy 0 'base ''Room)
+$(deriveSafeCopy 0 'base ''Login)
 
 newtype FirstName = FirstName Text deriving (Eq, Ord, Data, Typeable, SafeCopy)
 newtype SecondName = SecondName Text deriving (Eq, Ord, Data, Typeable, SafeCopy)
@@ -123,12 +131,16 @@ instance Indexable Guest where
                   , ixFun $ \x -> [ Phone $ phone x ]
                   , ixFun $ \x -> [ guestid x ]
                   ]
+
+instance Indexable Login where
+    empty = ixSet [ ixFun $ \x -> [ login x ] ]
                                  
 
 data Ticket = Ticket { nextLessonId:: LessonId
                      , nextGuestId::GuestId
                      , lesson:: IxSet Lesson 
                      , iguest:: IxSet Guest 
+                     , auth::IxSet Login
                      } deriving (Data, Typeable)
                        
 $(deriveSafeCopy 0 'base ''Ticket)
@@ -138,14 +150,17 @@ initialTicket = Ticket { nextGuestId = GuestId 1
                        , nextLessonId = LessonId 1
                        , iguest = empty
                        , lesson = empty
+                       , auth = fromList [Login "admin" "sha256|12|bbMnd3KFA64zDHucr304/A==|4+8A91s6V8qPXMd7vbAIXwe8mzCoFxibiM0xYXo8uOE="]
                        }
+
+
                 
 initRoom::Rooms
 initRoom = map (flip Room Nothing) [1 .. 20]
 
 data Configure = Configure { port:: Int
                            , state::AcidState Ticket
-                           , session'::Vault.Key (Session ActionM Text Bool)
-                           , store'::SessionStore ActionM Text Bool
+                           , session'::Vault.Key (Session ActionM Text ByteString)
+                           , store'::SessionStore ActionM Text ByteString
                            }
                            

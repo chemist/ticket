@@ -7,6 +7,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 module Main where
 
 import Web.Scotty
@@ -20,7 +21,7 @@ import Network.Wai.Middleware.Static
 import Network.Wai.Session 
 import Network.Wai.Session.Map
 import Data.Time
-import Data.Acid ( openLocalState )
+import Data.Acid ( openLocalState, AcidState(..))
 import Data.Acid.Local (createCheckpointAndClose)
 import Data.Acid.Advanced ( query', update' )
 import Control.Exception (bracket)
@@ -32,6 +33,9 @@ import qualified Data.Vault as Vault
 import Data.String (fromString)
 import Data.Default (def)
 import Network.HTTP.Types.Status
+
+import Crypto.PasswordStore
+import Data.ByteString (ByteString)
 
 -- import Debug.Trace
 
@@ -51,123 +55,155 @@ main = bracket openAcid
                main'
 
 main'::Configure -> IO ()
-main' conf = scotty (port conf) $ do
+main' Configure{..} = scotty port $ do
 
-    let session = session' conf
-        store   = store'   conf
     middleware logStdoutDev
     middleware $ staticPolicy (noDots >-> addBase "static")
-    middleware $ withSession store (fromString "session") def session
+    middleware $ withSession store' (fromString "session") def session'
     
     get "/" $ file "static/index.html"
 
     post "/login" $ do
-        j <- jsonData
+        l <- jsonData
         v <- vault <$> request
-        let Just (_, sSession) = Vault.lookup session v
-        case j of
-              Login "chemist" "123" -> do
-                  sSession "authorized" True
-                  status status200 
-                  text "welcom"
-              _ -> do
-                  sSession "authorized" False
-                  status status401
-                  text "not authorized"
+        let Just (_, sSession) = Vault.lookup session' v
+        check <- liftIO $ query' state (CheckLogin l)
+        if check 
+           then do
+               sSession "authorized" "true"
+               sSession "login" (login l)
+               status status200
+               text "welcom"
+           else do
+               sSession "authorized" "false"
+               sSession "login" (login l)
+               status status401
+               text "not authorized"
+
+-- admin section
+    post "/auth" $ do
+        Login{..} <- jsonData
+        checkAuthorization session'
+        onlyAdminCanDo session' $ do
+            hash <-  liftIO $ makePassword password 12
+            liftIO $ update' state (NewLogin $ Login login hash)
+
+    get "/users" $ do
+        checkAuthorization session'
+        onlyAdminCanDo session' $ do
+           list <- query' state ListLogin
+           json list
 
     -- get lessons list
     get "/lessons/:utc" $ do
-        checkAuthorization session
+        checkAuthorization session'
         utc' <- param "utc"
         case parseTime defaultTimeLocale "%FT%T%QZ" (unpack utc') of
-             Just (x::UTCTime) -> getLessonsList conf x
+             Just (x::UTCTime) -> getLessonsList state x
              Nothing -> status $ Status 400 "Bad Request>"
     -- add new lesson
     post "/lesson/" $ do
-        checkAuthorization session
+        checkAuthorization session'
         j <- jsonData
-        addNewLesson conf j
+        addNewLesson state j
     -- get  room by lesson
     get "/lesson/:id" $ do
-        checkAuthorization session
+        checkAuthorization session'
         lid <- LessonId <$> param "id"
-        getRooms conf lid
+        getRooms state lid
     -- edit lesson where id is lesson id 
     post "/lesson/:id" $ do
-        checkAuthorization session
+        checkAuthorization session'
         _ <- LessonId <$> param "id"
         j <- jsonData
-        addGuestToRoom conf j
+        addGuestToRoom state j
         
     -- get guests
     get "/guest/" $ do
-        checkAuthorization session
-        getGuests conf
+        checkAuthorization session'
+        getGuests state
     -- get guest by id
     get "/guest/:id" $ do
-        checkAuthorization session
+        checkAuthorization session'
         lid <- GuestId <$> param "id"
-        getGuest conf lid
+        getGuest state lid
     -- add guest
     post "/guest/" $ do
-        checkAuthorization session
+        checkAuthorization session'
         j <- jsonData
-        addNewGuest conf j
+        addNewGuest state j
 
     -- ^ if not authorized, status 401
     notFound $ do
         v' <- vault <$> request
-        let Just (lSession, _) = Vault.lookup session v'
+        let Just (lSession, _) = Vault.lookup session' v'
         check <- lSession "authorized"
-        unless (check == Just True) $ do
+        unless (check == Just "true") $ do
             status status401
             text "not authorized"
         
 -- ^ when user not authorized, go next route
-checkAuthorization::Vault.Key (Session ActionM Text Bool) -> ActionM ()
+checkAuthorization::Vault.Key (Session ActionM Text ByteString) -> ActionM ()
 checkAuthorization session = do
     v <- vault <$> request
     let Just (lSession, _) = Vault.lookup session v
     check <- lSession "authorized"
     case check of
-         Just True -> return ()
+         Just "true" -> return ()
          _ -> next
 
-        
-getLessonsList::Configure -> UTCTime -> ActionM ()
-getLessonsList conf date' = do
-    a <- liftIO $ query' (state conf) (CurrentLessons date')
+whois::Vault.Key (Session ActionM Text ByteString) -> ActionM ByteString
+whois session = do
+    v <- vault <$> request
+    let Just (lSession, _) = Vault.lookup session v
+    who <- lSession "login"
+    case who of
+         Just l -> return l
+         _ -> return ""
+
+onlyAdminCanDo::Vault.Key (Session ActionM Text ByteString) -> ActionM () -> ActionM ()
+onlyAdminCanDo session action = do
+    l <- whois session
+    if l == "admin"
+       then action
+       else do
+           status status403
+           text "Требуются административные привилегии"
+
+getLessonsList::AcidState Ticket -> UTCTime -> ActionM ()
+getLessonsList state' date' = do
+    a <- liftIO $ query' state' (CurrentLessons date')
     json a
 
-getRooms::Configure -> LessonId -> ActionM ()
-getRooms conf lid = do
-    less <- liftIO $ query' (state conf) (LessonById lid)
+getRooms::AcidState Ticket -> LessonId -> ActionM ()
+getRooms state' lid = do
+    less <- liftIO $ query' state' (LessonById lid)
     json less
 
 
-addNewLesson::Configure -> Lesson -> ActionM ()
-addNewLesson conf less = do
-      r <- liftIO $ update' (state conf) (NewLesson less)
+addNewLesson::AcidState Ticket -> Lesson -> ActionM ()
+addNewLesson state' less = do
+      r <- liftIO $ update' state' (NewLesson less)
       json r
 
 
-addGuestToRoom::Configure -> Lesson -> ActionM ()
-addGuestToRoom conf  less = do
-    _ <- liftIO $ update' (state conf) (UpdateLesson less)
-    less' <- liftIO $ query' (state conf) (LessonById $ lessonId less)
+addGuestToRoom::AcidState Ticket -> Lesson -> ActionM ()
+addGuestToRoom state'  less = do
+    _ <- liftIO $ update' state' (UpdateLesson less)
+    less' <- liftIO $ query' state' (LessonById $ lessonId less)
     json less'
 
-getGuests::Configure -> ActionM ()
-getGuests conf = do
-    a <- liftIO $ query' (state conf) QueryGuests 
+getGuests::AcidState Ticket -> ActionM ()
+getGuests state' = do
+    a <- liftIO $ query' state' QueryGuests 
     json a
     
-addNewGuest::Configure -> Guest -> ActionM ()
-addNewGuest conf g = do
-    a <- liftIO $ update' (state conf) (NewGuest g)
+addNewGuest::AcidState Ticket -> Guest -> ActionM ()
+addNewGuest state' g = do
+    a <- liftIO $ update' state' (NewGuest g)
     json a
     
-getGuest::Configure -> GuestId -> ActionM ()
-getGuest conf lid = do
-    a <- liftIO $ query' (state conf) (GuestById lid)
+getGuest::AcidState Ticket -> GuestId -> ActionM ()
+getGuest state' lid = do
+    a <- liftIO $ query' state' (GuestById lid)
     json a

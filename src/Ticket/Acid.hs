@@ -15,7 +15,9 @@ import Data.Acid ( Query
 import Data.IxSet
 import qualified Data.IxSet as IxSet
 import Ticket.Data
--- import Debug.Trace
+import Crypto.PasswordStore
+import Debug.Trace
+import Data.ByteString (ByteString)
 
 newLesson::Lesson -> Update Ticket Lesson
 newLesson l = do
@@ -29,6 +31,26 @@ newLesson l = do
     S.put $ lessons { nextLessonId = succ nextLessonId
                   , lesson = IxSet.insert new lesson}
     return new
+
+newLogin::Login -> Update Ticket ()
+newLogin l = do
+    a@Ticket{..} <-  S.get
+    case getOne $ auth @= login l of
+         Nothing -> S.put $ a { auth = IxSet.insert l auth }
+         Just r -> S.put $ a { auth = IxSet.updateIx (login l) l auth }
+
+checkLogin::Login -> Query Ticket Bool
+checkLogin l = do
+    Ticket{..} <-  R.ask
+    case getOne $ auth @= login l of
+         Nothing -> return False
+         Just result -> return $ verifyPassword (password l) (password result)
+
+listLogin::Query Ticket [Login]
+listLogin = do
+    Ticket{..} <- R.ask
+    return $ toList auth
+
 
 updateLesson::Lesson -> Update Ticket ()
 updateLesson updatedLesson = do
@@ -97,6 +119,9 @@ $(makeAcidic ''Ticket
   , 'queryGuests
   , 'newGuest
   , 'updateGuest
+  , 'newLogin
+  , 'checkLogin
+  , 'listLogin
   ])
  
 
