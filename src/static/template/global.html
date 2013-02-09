@@ -1,4 +1,5 @@
- <form name="lessonForm" ng-submit="addLesson(lessonForm)" class="form-inline">
+<div ng-include src="menutemplate.url"></div>
+<form name="lessonForm" ng-submit="addLesson(lessonForm)" class="form-inline">
   <input id="picker" type="text" class='span2' placeholder="дата" b-datepicker="{{dateoptions}}"
   ng-change="loadInfo()" ng-model="lessonForm.utcTime" />
   <input ng-model="lessonForm.utime" type="text" placeholder="начало" style="width: 75px" b-timepicker="{{timeoptions}}"

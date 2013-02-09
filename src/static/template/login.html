@@ -1,19 +1,8 @@
-  <div class="content">
-    <div class="row">
-      <div class="login-form span6 offset5">
-        <h2>Авторизация</h2>
-        <form name="form" ng-submit="login(form)">
-          <fieldset>
-            <div class="clearfix">
-              <input ng-model="form.login" type="text" required placeholder="Логин">
-            </div>
-            <div class="clearfix">
-              <input ng-model="form.password" type="password" required placeholder="Пароль">
-            </div>
-            <button class="btn btn-primary" type="submit">Войти</button>
-          </fieldset>
-        </form>
-      </div>
-      <label class="alert alert-error span9 offset1 hide">Неправильно введен логин пароль!</label>
-    </div>
-  </div>
+<form name="form" ng-submit="login(form)" class="form-signin">
+ <h2 class="form-signin-heading">Кто вы?</h2>
+ <input type="text" ng-model="form.login" required class="input-block-level"
+ placeholder="Логин">
+ <input type="password" ng-model="form.password" required class="input-block-level"
+ placeholder="Пароль">
+ <button class="btn btn-primary" type="submit">Войти</button>
+</form>

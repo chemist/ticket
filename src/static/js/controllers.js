@@ -15,6 +15,10 @@ Date.prototype.toLocaleDateString = function() {
 
 };
 
+function All($scope) {
+    $scope.menutemplate = { name: 'menu.html', url: 'template/menu.html'} ;
+};
+
 function Guests($scope, $http, Guest) {
     $scope.guests = Guest.query();
     console.log("guests controller");
@@ -35,6 +39,7 @@ function Settings($scope, $http, Users) {
 
 function Login($scope, $http) {
     $scope.login = function(data) {
+        console.log(data);
         $http.post('/login', data).success(function(x) {
             var urll = '/#/global/';
             window.location.href = urll;
