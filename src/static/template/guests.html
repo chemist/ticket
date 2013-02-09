@@ -1,0 +1,23 @@
+<table class="table table-hover span10">
+ <thead>
+  <tr>
+   <th>#</th>
+   <th>Фамилия</th>
+   <th>Имя</th>
+   <th>Телефон</th>
+   <th>Возраст</th>
+   <th>Коментарий</th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr ng-repeat="guest in guests">
+   <th>{{guest.guestid}}</th>
+   <th>{{guest.firstname}}</th>
+   <th>{{guest.secondname}}</th>
+   <th>{{guest.phone}}</th>
+   <th>{{guest.age}}</th>
+   <th>{{guest.comment}}</th>
+  </tr>
+ </tbody>
+</table>
+

@@ -15,6 +15,11 @@ Date.prototype.toLocaleDateString = function() {
 
 };
 
+function Guests($scope, $http, Guest) {
+    $scope.guests = Guest.query();
+    console.log("guests controller");
+};
+
 function Settings($scope, $http, Users) {
     $scope.users = Users.get();
     $scope.addUser = function(data) {

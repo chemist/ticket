@@ -1,16 +1,41 @@
 <!doctype html>
-<html lang="en" ng-app="ticket">
-<head>
+<html lang="ru" ng-app="ticket">
+ <head>
   <meta charset="utf-8">
   <title>Билетер</title>
-  <link rel="stylesheet" href="css/app.css"/>
-  <link rel="stylesheet" href="css/bootstrap.css"/>
-  <link rel="stylesheet" href="css/bootstrap-responsive.css"/>
-  <link rel="stylesheet" href="css/datepicker.css"/>
-  <link rel="stylesheet" href="css/timepicker.css"/>
-</head>
-<body>
-  <div class="container" ng-view></div>
+  <link rel="stylesheet" href="css/bootstrap.css" />
+  <link rel="stylesheet" href="css/bootstrap-responsive.css" />
+  <link rel="stylesheet" href="css/datepicker.css" />
+  <link rel="stylesheet" href="css/timepicker.css" />
+  <link rel="stylesheet" href="css/app.css" />
+  <style>
+      body { 
+          padding-top: 20px; 
+      }
+  </style>
+ </head>
+ <body>
+  <div class="container">
+   <div class="navbar">
+    <div class="navbar-inner">
+     <div class="container">
+      <a class="brand" href="/">Биллер</a>
+      <ul class="nav">
+       <li>
+        <a href="#/global">Уроки</a>
+       </li>
+       <li>
+        <a href="#/guests">Гости</a>
+       </li>
+       <li>
+        <a href="#/settings">Настройки</a>
+       </li>
+      </ul>
+     </div>
+    </div>
+   </div>
+   <div ng-view></div>
+  </div>
   <script src="lib/jquery/jquery.js"></script>
   <script src="lib/bootstrap/bootstrap.js"></script>
   <script src="lib/bootstrap/bootstrap-datepicker.js"></script>
@@ -23,6 +48,6 @@
   <script src="js/controllers.js"></script>
   <script src="js/filters.js"></script>
   <script src="js/directives.js"></script>
-</body>
-</html>
+ </body>
 
+</html>

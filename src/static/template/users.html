@@ -1,0 +1,15 @@
+  <ul>
+   <li ng-repeat="user in users">{{user}}</li>
+  </ul>
+  <h2>Управление пользователями.</h2>
+  <form name="form" ng-submit="addUser(form)">
+   <fieldset>
+    <div class="clearfix">
+     <input ng-model="form.login" type="text" required placeholder="Логин">
+    </div>
+    <div class="clearfix">
+     <input ng-model="form.password" type="password" required placeholder="Пароль">
+    </div>
+    <button class="btn btn-primary" type="submit">Добавить пользователя</button>
+   </fieldset>
+  </form>

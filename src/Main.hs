@@ -180,7 +180,6 @@ getRooms state' lid = do
     less <- liftIO $ query' state' (LessonById lid)
     json less
 
-
 addNewLesson::AcidState Ticket -> Lesson -> ActionM ()
 addNewLesson state' less = do
       r <- liftIO $ update' state' (NewLesson less)
