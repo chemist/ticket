@@ -1,1 +1,8 @@
 /* app css stylesheet */
+ tr.edit {
+ background-color: #d9edf7;
+}
+div#addCheck {
+ padding-left: 2em;
+ padding-top: 2em;
+}
