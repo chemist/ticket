@@ -29,7 +29,14 @@
       <th>{{g.guest.age}}</th>
       <th>{{g.guest.comment}}</th>
       <th>
-       <a ng-click="editRoom(g)"><i class="icon-repeat"></i></a>
+          <a ng-click="moveGuest(g)" class="dropdown-toggle" data-toggle="dropdown"><i class="icon-repeat">
+                  <ul class="dropdown-menu" role="menu" aria-laballedby="dropdownMenu">
+                      <li>hello</li>
+                      <li>hello</li>
+                      <li>hello</li>
+                  </ul>
+          </i></a>
+       <a ng-click="editRoom(g)"><i class="icon-wrench"></i></a>
        <a ng-click="cleanRoom(g)"><i class="icon-trash"></i></a>
       </th>
      </tr>

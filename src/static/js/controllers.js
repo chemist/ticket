@@ -53,7 +53,7 @@ function redirectToLogin(data) {
     window.location.href = "/#/login";
 };
 
-function Room($scope, $http, $routeParams, Lesson, Guest) {
+function Room($scope, $http, $routeParams, Lessons, Lesson, Guest) {
     $scope.lesson = Lesson.get({
         id: $routeParams.id
     }, function() {}, function(data) {
@@ -133,6 +133,16 @@ function Room($scope, $http, $routeParams, Lesson, Guest) {
         $scope.form.roomId = data.roomId;
         var edit = '#list_' + data.roomId;
         $(edit).addClass('edit');
+    };
+    var today = new Date();
+    $scope.lessons = Lessons.query({
+            time: today.toISOString()
+        });
+    $scope.moveGuest = function(data) {
+        console.log("remove ", data);
+        console.log(today);
+        console.log($scope.lessons);
+       // $scope.cleanRoom(data);
     };
 
 };
